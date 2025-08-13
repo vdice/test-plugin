@@ -1,0 +1,7 @@
+name = "print-version"
+description = "Test plugin that prints its version."
+version = "0.1.0"
+spin_compatibility = ">=3.1"
+license = "Apache-2.0"
+homepage = ""
+package = "./target/debug/print-version"
