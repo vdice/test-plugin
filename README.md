@@ -1,0 +1,1 @@
+A test plugin for vetting CI/CD related to Spin plugins.
