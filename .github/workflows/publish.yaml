@@ -88,20 +88,10 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: ${{ env.PROGRAM_NAME}}-${{ matrix.config.os }}-${{ matrix.config.arch }}
-          path: ./plugin/target/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }}
-
-      - name: Debug
-        run: |
-          ls -haltr
-          find .
+          path: ./plugin/target/release
 
       - name: Pluginify
         run: spin pluginify --arch ${{ matrix.config.arch }} -f spin-pluginify.release.toml
-
-      - name: Debug
-        run: |
-          ls -haltr
-          find .
 
       - name: Upload plugin artifacts
         uses: actions/upload-artifact@v4
@@ -132,11 +122,6 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           pattern: ${{ env.PROGRAM_NAME}}-*
-
-      - name: Debug
-        run: |
-          ls -haltr
-          find .
 
       - name: Generate merged manifest
         run: spin pluginify --merge --release-url-base https://github.com/fermyon/neutrino/releases/download/${GITHUB_REF_NAME}/ >${{ env.PROGRAM_NAME }}.json
