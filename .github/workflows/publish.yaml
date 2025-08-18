@@ -47,48 +47,15 @@ jobs:
       - name: Build plugin binary
         run: cargo build --release --target ${{ matrix.config.target }} ${{ matrix.config.extraArg }}
 
-      - name: Upload plugin artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.PROGRAM_NAME}}-${{ matrix.config.os }}-${{ matrix.config.arch }}
-          path: ./plugin/target/${{ matrix.config.target }}/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }}
-
-  pluginify:
-    name: Pluginify ${{ matrix.config.os }} ${{ matrix.config.arch }}
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: build
-    strategy:
-      matrix:
-        config:
-          - { os: "ubuntu-22.04", arch: "amd64", extension: "" }
-          - { os: "ubuntu-22.04", arch: "aarch64", extension: "" }
-          - { os: "macos-13", arch: "amd64", extension: "" }
-          - { os: "macos-14", arch: "aarch64", extension: "" }
-          - { os: "windows-latest", arch: "amd64", extension: ".exe" }
-      fail-fast: true
-    runs-on: ${{ matrix.config.os }}
-    defaults:
-      run:
-        shell: bash
-        working-directory: plugin
-    steps:
-      - uses: actions/checkout@v4
-
       - name: Install Spin
         uses: fermyon/actions/spin/setup@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # TODO: uncomment once spin-pluginify --version is supported
+          # TODO: uncomment once spin-pluginify --version is supported and remove separate install
           # plugins: pluginify
 
-      - name: Install pluginify
-        run: spin plugins install pluginify -y
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v5
-        with:
-          name: ${{ env.PROGRAM_NAME}}-${{ matrix.config.os }}-${{ matrix.config.arch }}
-          path: ./plugin/target/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }}
+      - name: Copy plugin binary to standard location
+        run: cp target/${{ matrix.config.target }}/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }} target/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }}
 
       - name: Pluginify
         run: spin pluginify --arch ${{ matrix.config.arch }} -f spin-pluginify.release.toml
@@ -155,6 +122,10 @@ jobs:
       #   uses: actions/download-artifact@v5
       #   with:
       #     name: ${{ env.PROGRAM_NAME}}.json
+
+      # TODO: remove when above TODO is done
+      - name: Remove ${{ env.PROGRAM_NAME}}.json
+        run: rm ${{ env.PROGRAM_NAME}}.json
 
       - name: Create GH release
         env:
