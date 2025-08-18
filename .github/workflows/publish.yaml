@@ -148,10 +148,13 @@ jobs:
           pattern: ${{ env.PROGRAM_NAME}}-*
           merge-multiple: true
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v5
-        with:
-          name: ${{ env.PROGRAM_NAME}}.json
+      # TODO: re-enable after finalizing on a rajatjindal/spin-plugin-releaser release
+      # that supports disabling its default mode of updating the manifest it builds to the GH release
+      # (which will fail if we've already uploaded it)
+      # - name: Download artifacts
+      #   uses: actions/download-artifact@v5
+      #   with:
+      #     name: ${{ env.PROGRAM_NAME}}.json
 
       - name: Create GH release
         env:
@@ -174,7 +177,7 @@ jobs:
       - name: Create PR in the spin-plugins repo
         # TODO: update to next release
         # uses: rajatjindal/spin-plugin-releaser@v1.0.15
-        uses: rajatjindal/spin-plugin-releaser@fix-diff-tag-formats
+        uses: rajatjindal/spin-plugin-releaser@alternate-impl
         with:
           github_token: ${{ github.token }}
           upload_checksums: true
