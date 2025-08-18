@@ -148,17 +148,12 @@ jobs:
           pattern: ${{ env.PROGRAM_NAME}}-*
           merge-multiple: true
 
-      # TODO: re-enable after finalizing on a rajatjindal/spin-plugin-releaser release
-      # that supports disabling its default mode of updating the manifest it builds to the GH release
-      # (which will fail if we've already uploaded it)
-      # - name: Download artifacts
-      #   uses: actions/download-artifact@v5
-      #   with:
-      #     name: ${{ env.PROGRAM_NAME}}.json
-
-      # TODO: remove when above is done
-      - name: Remove ${{ env.PROGRAM_NAME}}.json
-        run: rm ${{ env.PROGRAM_NAME}}.json
+      # Download (merged) manifest separately afterwards, as single-binary manifests with the same name
+      # are included in the other artifacts
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.PROGRAM_NAME}}.json
 
       - name: Create GH release
         env:
@@ -184,7 +179,8 @@ jobs:
         uses: rajatjindal/spin-plugin-releaser@alternate-impl
         with:
           github_token: ${{ github.token }}
-          upload_checksums: true
+          upload_checksums: false
+          upload_plugin_manifest: false
           template_file: plugin/.spin-plugin.json.tmpl
           # TODO: remove this after testing
           release_webhook_url: "https://spin-plugin-releaser-staging.fermyon.app"
