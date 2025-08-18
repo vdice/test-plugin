@@ -47,18 +47,61 @@ jobs:
       - name: Build plugin binary
         run: cargo build --release --target ${{ matrix.config.target }} ${{ matrix.config.extraArg }}
 
+      - name: Upload plugin artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROGRAM_NAME}}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          path: ./plugin/target/${{ matrix.config.target }}/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }}
+
+  pluginify:
+    name: Pluginify ${{ matrix.config.os }} ${{ matrix.config.arch }}
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    strategy:
+      matrix:
+        config:
+          - { os: "ubuntu-22.04", arch: "amd64", extension: "" }
+          - { os: "ubuntu-22.04", arch: "aarch64", extension: "" }
+          - { os: "macos-13", arch: "amd64", extension: "" }
+          - { os: "macos-14", arch: "aarch64", extension: "" }
+          - { os: "windows-latest", arch: "amd64", extension: ".exe" }
+      fail-fast: true
+    runs-on: ${{ matrix.config.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: plugin
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Install Spin
         uses: fermyon/actions/spin/setup@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # TODO: uncomment once spin-pluginify --version is supported and remove separate install
+          # TODO: uncomment once spin-pluginify --version is supported
           # plugins: pluginify
 
-      - name: Copy plugin binary to standard location
-        run: cp target/${{ matrix.config.target }}/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }} target/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }}
+      - name: Install pluginify
+        run: spin plugins install pluginify -y
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.PROGRAM_NAME}}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          path: ./plugin/target/release/${{ env.PROGRAM_NAME}}${{ matrix.config.extension }}
+
+      - name: Debug
+        run: |
+          ls -haltr
+          find .
 
       - name: Pluginify
         run: spin pluginify --arch ${{ matrix.config.arch }} -f spin-pluginify.release.toml
+
+      - name: Debug
+        run: |
+          ls -haltr
+          find .
 
       - name: Upload plugin artifacts
         uses: actions/upload-artifact@v4
@@ -89,6 +132,11 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           pattern: ${{ env.PROGRAM_NAME}}-*
+
+      - name: Debug
+        run: |
+          ls -haltr
+          find .
 
       - name: Generate merged manifest
         run: spin pluginify --merge --release-url-base https://github.com/fermyon/neutrino/releases/download/${GITHUB_REF_NAME}/ >${{ env.PROGRAM_NAME }}.json
@@ -123,7 +171,7 @@ jobs:
       #   with:
       #     name: ${{ env.PROGRAM_NAME}}.json
 
-      # TODO: remove when above TODO is done
+      # TODO: remove when above is done
       - name: Remove ${{ env.PROGRAM_NAME}}.json
         run: rm ${{ env.PROGRAM_NAME}}.json
 
@@ -135,23 +183,23 @@ jobs:
             ${{ env.PROGRAM_NAME}}* \
             --title "Spin ${{ env.PROGRAM_NAME }} plugin ${GITHUB_REF_NAME#plugin/}"
 
-  create-spin-plugins-pr:
-    name: Create spin-plugins PR
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    needs: release
-    permissions:
-      contents: write # Allow the job to update the GH release with checksums
-    steps:
-      - uses: actions/checkout@v4
+  # create-spin-plugins-pr:
+  #   name: Create spin-plugins PR
+  #   if: startsWith(github.ref, 'refs/tags/')
+  #   runs-on: ubuntu-latest
+  #   needs: release
+  #   permissions:
+  #     contents: write # Allow the job to update the GH release with checksums
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Create PR in the spin-plugins repo
-        # TODO: update to next release
-        # uses: rajatjindal/spin-plugin-releaser@v1.0.15
-        uses: rajatjindal/spin-plugin-releaser@alternate-impl
-        with:
-          github_token: ${{ github.token }}
-          upload_checksums: true
-          template_file: plugin/.spin-plugin.json.tmpl
-          # TODO: remove this after testing
-          release_webhook_url: "https://spin-plugin-releaser-staging.fermyon.app"
+  #     - name: Create PR in the spin-plugins repo
+  #       # TODO: update to next release
+  #       # uses: rajatjindal/spin-plugin-releaser@v1.0.15
+  #       uses: rajatjindal/spin-plugin-releaser@alternate-impl
+  #       with:
+  #         github_token: ${{ github.token }}
+  #         upload_checksums: true
+  #         template_file: plugin/.spin-plugin.json.tmpl
+  #         # TODO: remove this after testing
+  #         release_webhook_url: "https://spin-plugin-releaser-staging.fermyon.app"
