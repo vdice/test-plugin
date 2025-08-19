@@ -60,11 +60,11 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: "ubuntu-22.04", arch: "amd64", extension: "" }
-          - { os: "ubuntu-22.04", arch: "aarch64", extension: "" }
-          - { os: "macos-13", arch: "amd64", extension: "" }
-          - { os: "macos-14", arch: "aarch64", extension: "" }
-          - { os: "windows-latest", arch: "amd64", extension: ".exe" }
+          - { os: "ubuntu-22.04", arch: "amd64" }
+          - { os: "ubuntu-22.04", arch: "aarch64" }
+          - { os: "macos-13", arch: "amd64" }
+          - { os: "macos-14", arch: "aarch64" }
+          - { os: "windows-latest", arch: "amd64" }
       fail-fast: true
     runs-on: ${{ matrix.config.os }}
     defaults:
@@ -78,11 +78,7 @@ jobs:
         uses: fermyon/actions/spin/setup@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # TODO: uncomment once spin-pluginify --version is supported
-          # plugins: pluginify
-
-      - name: Install pluginify
-        run: spin plugins install pluginify -y
+          plugins: pluginify
 
       - name: Download artifacts
         uses: actions/download-artifact@v5
@@ -112,11 +108,7 @@ jobs:
         uses: fermyon/actions/spin/setup@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # TODO: uncomment once spin-pluginify --version is supported and remove separate install
-          # plugins: pluginify
-
-      - name: Install pluginify
-        run: spin plugins install pluginify -y
+          plugins: pluginify
 
       - name: Download artifacts
         uses: actions/download-artifact@v5
